@@ -52,6 +52,24 @@ model EnergyEntry {
   createdAt DateTime @default(now())
 }
 
+model StimulantEntry {
+  id            Int      @id @default(autoincrement())
+  date          String
+  time          String
+  name          String
+  caffeineMg    Int
+  durationHours Float
+  createdAt     DateTime @default(now())
+}
+
+model CustomStimulant {
+  id            Int      @id @default(autoincrement())
+  name          String
+  caffeineMg    Int
+  durationHours Float
+  createdAt     DateTime @default(now())
+}
+
 model Settings {
   id           Int    @id @default(autoincrement())
   calorieGoal  Int    @default(2000)

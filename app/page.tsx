@@ -17,16 +17,33 @@ interface Summary {
   energy: number | null;
 }
 
-const energyColors = ["#ef4444","#f97316","#eab308","#84cc16","#22c55e","#06b6d4","#7c3aed","#ec4899","#6366f1","#14b8a6"];
+interface EnergyBreakdown {
+  total: number;
+  sleepScore: number;
+  nutritionScore: number;
+  stimulantBoost: number;
+}
+
 const qualityLabel = ["","Poor","Fair","OK","Good","Great"];
+
+function energyColor(score: number): string {
+  if (score < 3) return "#ef4444";
+  if (score < 5) return "#f97316";
+  if (score < 7) return "#eab308";
+  if (score < 9) return "#22c55e";
+  return "#06b6d4";
+}
 
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [energyBreakdown, setEnergyBreakdown] = useState<EnergyBreakdown | null>(null);
   const today = format(new Date(), "yyyy-MM-dd");
   const displayDate = format(new Date(), "EEEE, MMMM d");
 
   useEffect(() => {
     fetch(`/api/summary?date=${today}`).then((r) => r.json()).then(setSummary);
+    const now = format(new Date(), "HH:mm");
+    fetch(`/api/energy-calc?date=${today}&now=${now}`).then((r) => r.json()).then(setEnergyBreakdown);
   }, [today]);
 
   if (!summary) return (
@@ -100,15 +117,22 @@ export default function Dashboard() {
               <Zap size={16} style={{ color: "#facc15" }} />
               <span className="text-sm font-medium" style={{ color: "var(--muted)" }}>Energy</span>
             </div>
-            {summary.energy !== null ? (
+            {energyBreakdown ? (
               <>
-                <p className="text-3xl font-bold" style={{ color: energyColors[summary.energy - 1] }}>{summary.energy}<span className="text-lg" style={{ color: "var(--muted)" }}>/10</span></p>
+                <p className="text-3xl font-bold" style={{ color: energyColor(energyBreakdown.total) }}>
+                  {energyBreakdown.total.toFixed(1)}<span className="text-lg" style={{ color: "var(--muted)" }}>/10</span>
+                </p>
                 <div className="mt-2 h-1.5 rounded-full" style={{ background: "var(--border)" }}>
-                  <div className="h-1.5 rounded-full" style={{ width: `${summary.energy * 10}%`, background: energyColors[summary.energy - 1] }} />
+                  <div className="h-1.5 rounded-full transition-all" style={{ width: `${energyBreakdown.total * 10}%`, background: energyColor(energyBreakdown.total) }} />
+                </div>
+                <div className="mt-2 flex gap-2 text-xs" style={{ color: "var(--muted)" }}>
+                  <span>😴 {energyBreakdown.sleepScore.toFixed(1)}</span>
+                  <span>🥗 {energyBreakdown.nutritionScore.toFixed(1)}</span>
+                  {energyBreakdown.stimulantBoost > 0 && <span>☕ +{energyBreakdown.stimulantBoost.toFixed(2)}</span>}
                 </div>
               </>
             ) : (
-              <p className="text-sm" style={{ color: "var(--muted)" }}>Not logged yet</p>
+              <p className="text-sm" style={{ color: "var(--muted)" }}>Calculating…</p>
             )}
           </Card>
         </Link>
