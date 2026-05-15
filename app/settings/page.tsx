@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Card from "@/components/Card";
-import { Settings, Watch, Plus, Trash2, Save } from "lucide-react";
+import { Settings, Watch, Plus, Trash2, Save, Copy, Wifi } from "lucide-react";
 
 interface SettingsData { calorieGoal: number; waterGoal: number; proteinGoal: number; vitamins: string[]; apiKey: string; }
 
@@ -10,10 +10,25 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [saved, setSaved] = useState(false);
   const [newVitamin, setNewVitamin] = useState("");
+  const [syncTab, setSyncTab] = useState<"sleep" | "daily">("sleep");
+  const [testStatus, setTestStatus] = useState<"" | "ok" | "error" | "testing">("");
 
   useEffect(() => {
     fetch("/api/settings").then(r => r.json()).then(setSettings);
   }, []);
+
+  const testConnection = async () => {
+    setTestStatus("testing");
+    try {
+      const r = await fetch("/api/watch-sync");
+      setTestStatus(r.ok ? "ok" : "error");
+    } catch {
+      setTestStatus("error");
+    }
+    setTimeout(() => setTestStatus(""), 3000);
+  };
+
+  const copyUrl = (url: string) => { navigator.clipboard.writeText(url).catch(() => {}); };
 
   const save = async () => {
     const updated = await fetch("/api/settings", {
@@ -96,50 +111,147 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* Apple Watch Sync */}
+      {/* Apple Watch / iPhone Health Sync */}
       <Card style={{ borderColor: "var(--accent)" }}>
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-3">
           <Watch size={20} style={{ color: "var(--accent)" }} />
-          <h2 className="font-semibold">Apple Watch / HealthKit Sync</h2>
+          <h2 className="font-semibold">Apple Watch / iPhone Health Sync</h2>
         </div>
-        <p className="text-sm mb-4" style={{ color: "var(--muted)" }}>
-          Use an iOS Shortcut with the <strong>Get Health Samples</strong> action to read Apple Watch data and POST it to this app automatically.
+        <p className="text-xs mb-4" style={{ color: "var(--muted)" }}>
+          iOS Shortcuts reads your Health data (sleep stages, calories, protein) and pushes it here automatically. Works with Apple Watch, and any app that writes to Apple Health — MyFitnessPal, Cronometer, WaterMinder, etc.
         </p>
 
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs mb-1 block" style={{ color: "var(--muted)" }}>API Key (optional — protects your endpoint)</label>
-            <input className={inputCls} style={inputStyle} placeholder="Leave blank for no auth" value={settings.apiKey}
-              onChange={e => setSettings(p => p ? { ...p, apiKey: e.target.value } : p)} />
-          </div>
+        {/* API Key */}
+        <div className="mb-3">
+          <label className="text-xs mb-1 block" style={{ color: "var(--muted)" }}>API Key (recommended — prevents unauthorized access)</label>
+          <input className={inputCls} style={inputStyle} placeholder="e.g. my-secret-key-123" value={settings.apiKey}
+            onChange={e => setSettings(p => p ? { ...p, apiKey: e.target.value } : p)} />
+        </div>
 
-          <div className="rounded-lg p-3 text-xs font-mono break-all" style={{ background: "var(--surface2)", color: "var(--accent)", border: "1px solid var(--border)" }}>
-            POST {apiUrl}
-          </div>
-
-          <div className="rounded-lg p-3 text-xs" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
-            <p className="font-semibold mb-2" style={{ color: "var(--text)" }}>iOS Shortcut JSON body:</p>
-            <pre className="text-xs overflow-auto" style={{ color: "var(--muted)" }}>{JSON.stringify({
-              apiKey: settings.apiKey || "<your-api-key>",
-              date: "2024-01-15",
-              sleep: { bedtime: "22:30", wakeTime: "07:00", duration: 8.5, quality: 4 },
-              water: 500,
-              energy: 8,
-            }, null, 2)}</pre>
-          </div>
-
-          <div className="rounded-lg p-3 text-sm" style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.3)" }}>
-            <p className="font-semibold mb-1" style={{ color: "var(--accent)" }}>Setup steps:</p>
-            <ol className="list-decimal list-inside space-y-1 text-xs" style={{ color: "var(--muted)" }}>
-              <li>Open the <strong>Shortcuts</strong> app on your iPhone</li>
-              <li>Create a new shortcut with <strong>Automation</strong> (runs daily at 8am)</li>
-              <li>Add <strong>Get Health Samples</strong> → Sleep Analysis</li>
-              <li>Add <strong>Get Contents of URL</strong> → set to POST to the URL above</li>
-              <li>Set the JSON body with your sleep/health data</li>
-              <li>Save and enable the automation</li>
-            </ol>
+        {/* Webhook URL + buttons */}
+        <div className="mb-4">
+          <label className="text-xs mb-1 block" style={{ color: "var(--muted)" }}>Your webhook URL</label>
+          <div className="flex gap-2 items-stretch">
+            <div className="flex-1 rounded-lg px-3 py-2 text-xs font-mono break-all flex items-center min-w-0"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--accent)" }}>
+              <span className="truncate">{apiUrl}</span>
+            </div>
+            <button onClick={() => copyUrl(apiUrl)} title="Copy URL"
+              className="px-3 rounded-lg text-xs font-medium flex items-center gap-1 shrink-0"
+              style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)" }}>
+              <Copy size={13} /> Copy
+            </button>
+            <button onClick={testConnection} title="Test connection"
+              className="px-3 rounded-lg text-xs font-medium flex items-center gap-1 shrink-0 transition-all"
+              style={{
+                background: testStatus === "ok" ? "#22c55e" : testStatus === "error" ? "#ef4444" : "var(--surface2)",
+                border: "1px solid var(--border)",
+                color: testStatus === "ok" || testStatus === "error" ? "#fff" : "var(--text)",
+              }}>
+              <Wifi size={13} />
+              {testStatus === "ok" ? "OK!" : testStatus === "error" ? "Failed" : testStatus === "testing" ? "…" : "Test"}
+            </button>
           </div>
         </div>
+
+        {/* Tab switcher */}
+        <div className="flex gap-1 mb-4 p-1 rounded-lg" style={{ background: "var(--surface2)" }}>
+          {(["sleep", "daily"] as const).map(t => (
+            <button key={t} onClick={() => setSyncTab(t)}
+              className="flex-1 py-1.5 rounded-md text-xs font-medium transition-all"
+              style={{ background: syncTab === t ? "var(--accent)" : "transparent", color: syncTab === t ? "#fff" : "var(--muted)" }}>
+              {t === "sleep" ? "Sleep Shortcut" : "Daily Health"}
+            </button>
+          ))}
+        </div>
+
+        {/* Sleep Shortcut */}
+        {syncTab === "sleep" && (
+          <div className="space-y-3">
+            <p className="text-xs" style={{ color: "var(--muted)" }}>
+              Create a daily automation at <strong>8:00 AM</strong>. It reads last night&apos;s Apple Watch sleep and pushes it here. Sleep quality is auto-calculated from deep + REM percentages.
+            </p>
+            <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <p className="font-semibold" style={{ color: "var(--text)" }}>Shortcuts app steps:</p>
+              <ol className="list-decimal list-inside space-y-1.5" style={{ color: "var(--muted)" }}>
+                <li>Open <strong>Shortcuts</strong> → <strong>Automation</strong> tab → <strong>+</strong> → <strong>Time of Day</strong> → 8:00 AM → Daily</li>
+                <li>Add action: <strong>Find Health Samples</strong> → type <strong>Asleep (Deep)</strong> → Last 1 day → name it <em>deep</em></li>
+                <li>Add action: <strong>Calculate Statistics</strong> on <em>deep</em> → <strong>Sum</strong> of <strong>Duration (min)</strong> → name it <em>deepMins</em></li>
+                <li>Repeat steps 2–3 for <strong>Asleep (REM)</strong> → name outputs <em>rem</em>, <em>remMins</em></li>
+                <li>Add action: <strong>Find Health Samples</strong> → type <strong>In Bed</strong> → Last 1 day → Calculate Sum Duration → name it <em>totalMins</em></li>
+                <li>Add action: <strong>Get Contents of URL</strong> → URL: paste your webhook above → Method: <strong>POST</strong> → Body: <strong>JSON</strong></li>
+                <li>Add these JSON fields (tap each + to add a key/value pair):</li>
+              </ol>
+            </div>
+            <div className="rounded-lg p-3 text-xs" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <p className="font-semibold mb-2" style={{ color: "var(--text)" }}>JSON body (use Shortcut variables for deepMins / remMins / totalMins):</p>
+              <pre className="overflow-auto" style={{ color: "var(--accent)" }}>{JSON.stringify({
+                apiKey: settings.apiKey || "<your-api-key>",
+                sleep: {
+                  bedtime: "23:00",
+                  wakeTime: "07:00",
+                  duration: "«totalMins / 60»",
+                  deepMins: "«deepMins»",
+                  remMins: "«remMins»",
+                  totalMins: "«totalMins»",
+                }
+              }, null, 2)}</pre>
+              <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+                Replace <code>«...»</code> with the matching Shortcut variable. Quality 1–5 is computed automatically from deep + REM percentage. Or pass <code>&quot;quality&quot;: 3</code> directly to set it manually.
+              </p>
+            </div>
+            <div className="rounded-lg p-3 text-xs" style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)" }}>
+              <p className="font-medium mb-1" style={{ color: "var(--accent)" }}>Quality scale derived from stages:</p>
+              <div className="grid grid-cols-5 gap-1" style={{ color: "var(--muted)" }}>
+                {[["1 Poor","<15%"],["2 Fair","15-20%"],["3 OK","20-25%"],["4 Good","25-30%"],["5 Great",">30%"]].map(([l,p]) => (
+                  <div key={l} className="text-center rounded p-1" style={{ background: "var(--surface)" }}>
+                    <p className="font-medium" style={{ color: "var(--text)" }}>{l}</p>
+                    <p>{p} deep+REM</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Daily Health Shortcut */}
+        {syncTab === "daily" && (
+          <div className="space-y-3">
+            <p className="text-xs" style={{ color: "var(--muted)" }}>
+              Create a daily automation at <strong>9:00 PM</strong>. It reads today&apos;s dietary calories and protein from Apple Health (logged by MyFitnessPal, Cronometer, or manually) and syncs them here.
+            </p>
+            <div className="rounded-lg p-3 text-xs space-y-2" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <p className="font-semibold" style={{ color: "var(--text)" }}>Shortcuts app steps:</p>
+              <ol className="list-decimal list-inside space-y-1.5" style={{ color: "var(--muted)" }}>
+                <li>Open <strong>Shortcuts</strong> → <strong>Automation</strong> → <strong>+</strong> → <strong>Time of Day</strong> → 9:00 PM → Daily</li>
+                <li>Add action: <strong>Find Health Samples</strong> → type <strong>Dietary Energy</strong> → Today → Calculate <strong>Sum</strong> → name it <em>totalCal</em></li>
+                <li>Add action: <strong>Find Health Samples</strong> → type <strong>Dietary Protein</strong> → Today → Calculate <strong>Sum</strong> → name it <em>totalProtein</em></li>
+                <li>Add action: <strong>Get Contents of URL</strong> → paste webhook URL → POST → JSON body below</li>
+                <li>Save and enable the automation</li>
+              </ol>
+            </div>
+            <div className="rounded-lg p-3 text-xs" style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}>
+              <p className="font-semibold mb-2" style={{ color: "var(--text)" }}>JSON body:</p>
+              <pre className="overflow-auto" style={{ color: "var(--accent)" }}>{JSON.stringify({
+                apiKey: settings.apiKey || "<your-api-key>",
+                calories: "«totalCal»",
+                protein: "«totalProtein»",
+              }, null, 2)}</pre>
+              <p className="mt-2" style={{ color: "var(--muted)" }}>
+                Calories and protein are <strong>replaced</strong> each sync (not duplicated) — safe to run multiple times per day.
+              </p>
+            </div>
+            <div className="rounded-lg p-3 text-xs" style={{ background: "rgba(6,182,212,0.07)", border: "1px solid rgba(6,182,212,0.2)" }}>
+              <p className="font-medium mb-1.5" style={{ color: "#06b6d4" }}>Apps that write to Apple Health automatically:</p>
+              <ul className="space-y-1" style={{ color: "var(--muted)" }}>
+                <li><strong>MyFitnessPal</strong> — calories + macros (enable in MFP Settings → Apps → Apple Health)</li>
+                <li><strong>Cronometer</strong> — detailed macros (Settings → Integrations → Apple Health)</li>
+                <li><strong>Lose It!</strong> — calories + macros (Settings → Apple Health)</li>
+                <li><strong>Apple Watch</strong> — active calories burned (separate from dietary)</li>
+              </ul>
+            </div>
+          </div>
+        )}
       </Card>
 
       <button onClick={save} className="w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all" style={{ background: saved ? "#22c55e" : "var(--accent)", color: "#fff" }}>
