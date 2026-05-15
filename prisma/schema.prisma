@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model CalorieEntry {
+  id        Int      @id @default(autoincrement())
+  date      String
+  meal      String
+  calories  Int
+  protein   Float?
+  carbs     Float?
+  fat       Float?
+  createdAt DateTime @default(now())
+}
+
+model WaterEntry {
+  id        Int      @id @default(autoincrement())
+  date      String
+  amount    Int
+  createdAt DateTime @default(now())
+}
+
+model VitaminEntry {
+  id        Int      @id @default(autoincrement())
+  date      String
+  name      String
+  taken     Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SleepEntry {
+  id        Int      @id @default(autoincrement())
+  date      String
+  bedtime   String
+  wakeTime  String
+  duration  Float
+  quality   Int
+  fromWatch Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model EnergyEntry {
+  id        Int      @id @default(autoincrement())
+  date      String
+  level     Int
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id           Int    @id @default(autoincrement())
+  calorieGoal  Int    @default(2000)
+  waterGoal    Int    @default(2500)
+  vitamins     String @default("[]")
+  apiKey       String @default("")
+}
