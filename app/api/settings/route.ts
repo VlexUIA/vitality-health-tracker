@@ -5,7 +5,7 @@ export async function GET() {
   let settings = await prisma.settings.findFirst();
   if (!settings) {
     settings = await prisma.settings.create({
-      data: { calorieGoal: 2000, waterGoal: 2500, vitamins: '["Vitamin D","Vitamin C","Omega-3","Magnesium"]', apiKey: "" },
+      data: { calorieGoal: 2000, waterGoal: 2500, proteinGoal: 150, vitamins: '["Vitamin D","Vitamin C","Omega-3","Magnesium"]', apiKey: "" },
     });
   }
   return NextResponse.json({ ...settings, vitamins: JSON.parse(settings.vitamins) });
@@ -18,6 +18,7 @@ export async function PUT(req: NextRequest) {
   const data = {
     calorieGoal: body.calorieGoal ? Number(body.calorieGoal) : undefined,
     waterGoal: body.waterGoal ? Number(body.waterGoal) : undefined,
+    proteinGoal: body.proteinGoal ? Number(body.proteinGoal) : undefined,
     vitamins: body.vitamins ? JSON.stringify(body.vitamins) : undefined,
     apiKey: body.apiKey !== undefined ? body.apiKey : undefined,
   };
@@ -29,6 +30,7 @@ export async function PUT(req: NextRequest) {
       data: {
         calorieGoal: data.calorieGoal ?? 2000,
         waterGoal: data.waterGoal ?? 2500,
+        proteinGoal: data.proteinGoal ?? 150,
         vitamins: data.vitamins ?? "[]",
         apiKey: data.apiKey ?? "",
       },

@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import Card from "@/components/Card";
 import RingProgress from "@/components/RingProgress";
-import { Flame, Droplets, Pill, Moon, Zap, Watch } from "lucide-react";
+import { Flame, Droplets, Pill, Moon, Zap, Watch, Beef } from "lucide-react";
 import Link from "next/link";
 
 interface Summary {
   date: string;
   calories: { total: number; goal: number };
   water: { total: number; goal: number };
+  protein: { total: number; goal: number };
   vitamins: { taken: number; total: number };
   sleep: { duration: number; quality: number } | null;
   energy: number | null;
@@ -37,6 +38,7 @@ export default function Dashboard() {
   const ringStats = [
     { href: "/calories", icon: Flame, label: "Calories", value: summary.calories.total, max: summary.calories.goal, display: `${summary.calories.total}`, sub: `/ ${summary.calories.goal} kcal`, color: "#f97316" },
     { href: "/water", icon: Droplets, label: "Water", value: summary.water.total, max: summary.water.goal, display: `${summary.water.total}`, sub: `/ ${summary.water.goal} ml`, color: "#06b6d4" },
+    { href: "/calories", icon: Beef, label: "Protein", value: summary.protein.total, max: summary.protein.goal, display: `${summary.protein.total}`, sub: `/ ${summary.protein.goal} g`, color: "#22c55e" },
   ];
 
   return (
@@ -46,15 +48,15 @@ export default function Dashboard() {
         <p style={{ color: "var(--muted)" }}>{displayDate}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {ringStats.map(({ href, icon: Icon, label, value, max, display, sub, color }) => (
-          <Link key={href} href={href}>
-            <Card className="flex flex-col items-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer">
-              <div className="flex items-center gap-2 self-start">
-                <Icon size={16} style={{ color }} />
-                <span className="text-sm font-medium" style={{ color: "var(--muted)" }}>{label}</span>
+          <Link key={label} href={href}>
+            <Card className="flex flex-col items-center gap-2 hover:scale-[1.02] transition-transform cursor-pointer p-3">
+              <div className="flex items-center gap-1.5 self-start">
+                <Icon size={14} style={{ color }} />
+                <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>{label}</span>
               </div>
-              <RingProgress value={value} max={max} size={110} color={color} label={display} sublabel={sub} />
+              <RingProgress value={value} max={max} size={90} stroke={9} color={color} label={display} sublabel={sub} />
             </Card>
           </Link>
         ))}

@@ -26,6 +26,10 @@ export async function GET(req: NextRequest) {
       total: water.reduce((s, e) => s + e.amount, 0),
       goal: settings?.waterGoal ?? 2500,
     },
+    protein: {
+      total: Math.round(calories.reduce((s, e) => s + (e.protein ?? 0), 0)),
+      goal: settings?.proteinGoal ?? 150,
+    },
     vitamins: {
       taken: vitamins.filter((v) => v.taken).length,
       total: vitaminNames.length,

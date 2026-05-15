@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Card from "@/components/Card";
 import { Settings, Watch, Plus, Trash2, Save } from "lucide-react";
 
-interface SettingsData { calorieGoal: number; waterGoal: number; vitamins: string[]; apiKey: string; }
+interface SettingsData { calorieGoal: number; waterGoal: number; proteinGoal: number; vitamins: string[]; apiKey: string; }
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<SettingsData | null>(null);
@@ -64,6 +64,11 @@ export default function SettingsPage() {
             <label className="text-xs mb-1 block" style={{ color: "var(--muted)" }}>Water Goal (ml)</label>
             <input className={inputCls} style={inputStyle} type="number" value={settings.waterGoal}
               onChange={e => setSettings(p => p ? { ...p, waterGoal: Number(e.target.value) } : p)} />
+          </div>
+          <div>
+            <label className="text-xs mb-1 block" style={{ color: "var(--muted)" }}>Protein Goal (g)</label>
+            <input className={inputCls} style={inputStyle} type="number" value={settings.proteinGoal}
+              onChange={e => setSettings(p => p ? { ...p, proteinGoal: Number(e.target.value) } : p)} />
           </div>
         </div>
       </Card>
