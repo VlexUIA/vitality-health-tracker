@@ -47,12 +47,12 @@ export default function Nav() {
       {/* Bottom bar for mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex justify-around items-center py-2 border-t"
         style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-        {links.slice(0, 6).map(({ href, icon: Icon, label }) => {
+        {links.map(({ href, icon: Icon, label }) => {
           const active = path === href;
           return (
-            <Link key={href} href={href} className="flex flex-col items-center gap-0.5 px-2 py-1">
-              <Icon size={22} style={{ color: active ? "var(--accent)" : "var(--muted)" }} />
-              <span className="text-[10px]" style={{ color: active ? "var(--accent)" : "var(--muted)" }}>{label}</span>
+            <Link key={href} href={href} className="flex flex-col items-center gap-0.5 px-1 py-1">
+              <Icon size={20} style={{ color: active ? "var(--accent)" : "var(--muted)" }} />
+              <span className="text-[9px]" style={{ color: active ? "var(--accent)" : "var(--muted)" }}>{label}</span>
             </Link>
           );
         })}
